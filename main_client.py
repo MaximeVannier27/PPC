@@ -6,7 +6,12 @@ def client_program():
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client_socket.connect(('localhost', 8000))  # Replace with your server details
     print("Connecté au serveur !")
-    time.sleep(5)
+    print("---------------------")
+    print("En attente des autres joueurs...")
+
+    client_socket.recv(1)
+    print("TOUT LE MONDE EST CONNECTE")
+    
     # Code pour demander la connexion, attendre les joueurs, etc.
 
     # while True:
@@ -22,6 +27,8 @@ def client_program():
     #         # C'est le tour du joueur
     #         user_action = input("Choisissez une action (indice/poser): ")
     #         client_socket.send(user_action.encode())
+
+
     client_socket.close()
 
 if __name__ == "__main__":

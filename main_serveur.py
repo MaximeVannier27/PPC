@@ -1,6 +1,6 @@
 import socket
-import threading
-import multiprocessing
+from threading import Lock
+from multiprocessing import Process, Manager, Queue, Value
 from joueur_process import joueur_process
 from fonction_serveur import main_server
 
@@ -19,18 +19,23 @@ if __name__ == "__main__":
     server_socket.bind(('localhost', 8000))
     server_socket.listen(nombre_joueurs)
 
-    shared_memory = multiprocessing.Manager().dict()
-    message_queue = multiprocessing.Queue()
+    shared_memory = Manager().dict()
+    message_queue = Queue()
+
 
     c=1
 
     while c<=nombre_joueurs:
-
+        print("En l'attente de joueurs...")
         client, addr = server_socket.accept()
         print(f"Joueur {c} connecté ({addr})")
-        joueur = multiprocessing.Process(target=joueur_process, args=(shared_memory, message_queue,client))
+        joueur = Process(target=joueur_process, args=(shared_memory, message_queue,client))
         joueur.start()
-        dic_joueurs[f"joueur_{c}"] = joueur
+        dic_joueurs[f"joueur_{c}"] = {"client":client,"addresse":addr,"process":joueur}
         c+=1
+    for _,lst in dic_joueurs.items():
+          signal = 1
+          lst["client"].sendall(signal.to_bytes(1,byteorder='big'))
+
     main_server()
     server_socket.close()
