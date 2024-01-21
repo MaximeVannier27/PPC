@@ -5,11 +5,6 @@ from joueur_process import joueur_process
 from fonction_serveur import main_server
 
 
-
-
-
-
-
 if __name__ == "__main__":
 
     nombre_joueurs = int(input("Combien de joueurs vont se connecter ?\n--> "))
@@ -34,8 +29,7 @@ if __name__ == "__main__":
         dic_joueurs[f"joueur_{c}"] = {"client":client,"addresse":addr,"process":joueur}
         c+=1
     for _,lst in dic_joueurs.items():
-          signal = 1
-          lst["client"].sendall(signal.to_bytes(1,byteorder='big'))
+          lst["client"].sendall(b'\x01')
 
     main_server()
     server_socket.close()
