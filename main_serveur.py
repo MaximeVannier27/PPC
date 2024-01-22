@@ -1,6 +1,6 @@
 import socket
 from threading import Lock
-from multiprocessing import Process, Manager, Queue, Value
+from multiprocessing import Process, Manager, Queue, Event
 from joueur_process import joueur_process
 from fonction_serveur import main_server
 
@@ -16,7 +16,7 @@ if __name__ == "__main__":
 
     shared_memory = Manager().dict()
     message_queue = Queue()
-
+    synchro = Event()
 
     c=1
 
@@ -24,12 +24,14 @@ if __name__ == "__main__":
         print("En l'attente de joueurs...")
         client, addr = server_socket.accept()
         print(f"Joueur {c} connecté ({addr})")
-        joueur = Process(target=joueur_process, args=(shared_memory, message_queue,client))
+        joueur = Process(target=joueur_process, args=(shared_memory, message_queue,client,synchro))
         joueur.start()
         dic_joueurs[f"joueur_{c}"] = {"client":client,"addresse":addr,"process":joueur}
         c+=1
     for _,lst in dic_joueurs.items():
           lst["client"].sendall(b'\x01')
-
+    synchro.set()
     main_server()
+
+    
     server_socket.close()
