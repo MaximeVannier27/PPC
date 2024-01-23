@@ -8,9 +8,12 @@ def reception_info(chaussette):
     decoded_data = data.decode("utf-8")
     return decoded_data
 
-def envoi_info(data_str,chaussette):
-    data = data_str.encode('utf-8')
-    chaussette.send(data)
+def envoi_info(data_brut,chaussette):
+    if type(data_brut) != bytes:
+        data = data_brut.encode('utf-8')
+        chaussette.send(data)
+    else:
+        chaussette.send(data_brut)
 
 
 def client_program():
@@ -33,12 +36,13 @@ def client_program():
     while True:
         info_joueurs_codee = client_socket.recv(4096)
         info_joueurs = pickle.loads(info_joueurs_codee)
-        if info_joueurs != pickle.dumps("STOP"):
+        if info_joueurs != "fin envoi mains":
             print(f"Main du joueur {info_joueurs[0]}:")
             print(f"{info_joueurs[1]}")
+            envoi_info("Main reçue",client_socket)
         else:
             break
-    print("STOP")
+    print("fin envoi mains")
     
     # Code pour demander la connexion, attendre les joueurs, etc.
 

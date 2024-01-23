@@ -21,7 +21,7 @@ def mon_tour(num_joueur,shared_memory_dic, message_queue_dic,s):
 
     "ATTENTION AUX CLES DES SHARED MEMORY"
 
-    #main_actuelle = shared_memory_dic[etat_main][f"joueur_{num_joueur}"]
+    #main_actuelle = shared_memory_dic[mains][f"joueur_{num_joueur}"]
     main_actuelle = [(1,"rouge"),(2,"vert"),(1,"bleu"),(4,"vert"),(1,"blanc")]
     main_client = []
 
@@ -40,14 +40,20 @@ def mon_tour(num_joueur,shared_memory_dic, message_queue_dic,s):
     envoi_info(data_main_client,s)
 
 # envoi de la main des autres joueurs
-    #for j,m in shared_memory_dic[etat_main]:
+    #for j,m in shared_memory_dic[mains]:
     dico = {"joueur_1": [(1,"rouge"),(2,"vert"),(1,"bleu"),(4,"vert"),(1,"blanc")], "joueur_2": [(5,"rouge"),(2,"bleu"),(1,"rouge"),(1,"vert"),(2,"blanc")]}
     for j,m in dico.items():
         if j != f"joueur_{num_joueur}":
             data_main_joueurs = pickle.dumps((j,m))
             envoi_info(data_main_joueurs,s)
-    envoi_info(pickle.dumps("STOP"),s)
-    print("STOP")
+            
+    #accusé de reception
+    for i in range(len(dico)-1):
+        reception_info(s)
+    
+
+    envoi_info(pickle.dumps("fin envoi mains"),s)
+    print("fin envoi mains")
 
     # DEMANDE_ACTIONS_AU_CLIENT(s)
 
