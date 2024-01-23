@@ -33,15 +33,15 @@ def client_program():
     print(pickle.loads(client_socket.recv(4096)))
 
     print("-------------------")
-    while True:
+    nb_joueurs_exclu = int.from_bytes(client_socket.recv(1), byteorder='big')
+    c=1
+    while c<=nb_joueurs_exclu:
         info_joueurs_codee = client_socket.recv(4096)
         info_joueurs = pickle.loads(info_joueurs_codee)
-        if info_joueurs != "fin envoi mains":
-            print(f"Main du joueur {info_joueurs[0]}:")
-            print(f"{info_joueurs[1]}")
-            envoi_info("Main reçue",client_socket)
-        else:
-            break
+        print(f"Main du joueur {info_joueurs[0]}:")
+        print(f"{info_joueurs[1]}")
+        envoi_info("Main reçue",client_socket)
+        c+=1
     print("fin envoi mains")
     
     # Code pour demander la connexion, attendre les joueurs, etc.
