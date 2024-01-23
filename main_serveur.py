@@ -24,7 +24,7 @@ if __name__ == "__main__":
         print("En l'attente de joueurs...")
         client, addr = server_socket.accept()
         print(f"Joueur {c} connecté ({addr})")
-        joueur = Process(target=joueur_process, args=(shared_memory, message_queue,client,synchro))
+        joueur = Process(target=joueur_process, args=(c,shared_memory, message_queue,client,synchro))
         joueur.start()
         dic_joueurs[f"joueur_{c}"] = {"client":client,"addresse":addr,"process":joueur}
         c+=1
