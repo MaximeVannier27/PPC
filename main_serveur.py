@@ -1,6 +1,6 @@
 import socket
 from threading import Lock,Thread
-from multiprocessing import Process, Manager, Value
+from multiprocessing import Process, Manager, Event
 from multiprocessing Lock as mLock
 from joueur_process import joueur_process
 from fonction_serveur import main_server, distribution,piocheCarte
@@ -54,4 +54,6 @@ if __name__ == "__main__":
 
 
     main_server()
+
+    
     server_socket.close()

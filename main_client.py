@@ -1,6 +1,17 @@
 import socket
+import pickle
 import threading
 import time
+
+def reception_info(chaussette):
+    data = chaussette.recv(1024)
+    decoded_data = data.decode("utf-8")
+    return decoded_data
+
+def envoi_info(data_str,chaussette):
+    data = data_str.encode('utf-8')
+    chaussette.send(data)
+
 
 def client_program():
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -11,6 +22,23 @@ def client_program():
 
     client_socket.recv(1)
     print("TOUT LE MONDE EST CONNECTE")
+    print("-------------------")
+
+    """DEBUT DE TOUR CLIENT"""
+
+    print("Voici votre jeu: ")
+    print(pickle.loads(client_socket.recv(4096)))
+
+    print("-------------------")
+    while True:
+        info_joueurs_codee = client_socket.recv(4096)
+        info_joueurs = pickle.loads(info_joueurs_codee)
+        if info_joueurs != pickle.dumps("STOP"):
+            print(f"Main du joueur {info_joueurs[0]}:")
+            print(f"{info_joueurs[1]}")
+        else:
+            break
+    print("STOP")
     
     # Code pour demander la connexion, attendre les joueurs, etc.
 
