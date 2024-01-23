@@ -34,14 +34,31 @@ def client_program():
 
     print("-------------------")
     nb_joueurs_exclu = int.from_bytes(client_socket.recv(1), byteorder='big')
-    c=1
-    while c<=nb_joueurs_exclu:
-        info_joueurs_codee = client_socket.recv(4096)
-        info_joueurs = pickle.loads(info_joueurs_codee)
-        print(f"Main du joueur {info_joueurs[0]}:")
-        print(f"{info_joueurs[1]}")
-        envoi_info("Main reçue",client_socket)
-        c+=1
+    
+
+    c = 1
+    while c < nb_joueurs_exclu:
+        # Recevoir la taille du message
+        taille_info = int.from_bytes(client_socket.recv(4), byteorder='big')
+    
+        # Recevoir les données
+        info_joueurs_codee = b""
+        while len(info_joueurs_codee) < taille_info:
+            chunk = client_socket.recv(min(4096, taille_info - len(info_joueurs_codee)))
+            if not chunk:
+                # Gérer une éventuelle fermeture de la connexion
+                break
+            info_joueurs_codee += chunk
+    
+        if len(info_joueurs_codee) == taille_info:
+            # Désérialiser les données
+            info_joueurs = pickle.loads(info_joueurs_codee)
+            
+            # Afficher les informations
+            print(f"Main du joueur {info_joueurs[0]}:")
+            print(f"{info_joueurs[1]}")
+        
+        c += 1
     print("fin envoi mains")
     
     # Code pour demander la connexion, attendre les joueurs, etc.
@@ -59,9 +76,9 @@ def client_program():
     #         # C'est le tour du joueur
     #         user_action = input("Choisissez une action (indice/poser): ")
     #         client_socket.send(user_action.encode())
-
-
     client_socket.close()
 
 if __name__ == "__main__":
     client_program()
+
+ 

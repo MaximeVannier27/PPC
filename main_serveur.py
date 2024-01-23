@@ -3,7 +3,7 @@ from threading import Lock
 from multiprocessing import Process, Manager, Queue, Event
 from joueur_process import joueur_process
 from fonction_serveur import main_server
-
+import time
 
 if __name__ == "__main__":
 
@@ -32,6 +32,4 @@ if __name__ == "__main__":
           lst["client"].sendall(b'\x01')
     synchro.set()
     main_server()
-
-    
     server_socket.close()
