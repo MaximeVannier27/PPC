@@ -17,16 +17,22 @@ def envoi_info(data_brut,chaussette):
 
 def mon_tour(s):
     print("C'est ton tour !")
-    choix = input("Que veux-tu faire ? (indice/poser)")
-    envoi_info(choix,s)
-    if choix == "indice":
-        joueur = input("Sur la main de quel joueur veux-tu donner une info ?")
-        info = input("Ecrire l'info à partager (une couleur/un nombre): ")
-        print("---------------------------------")
-        envoi_info(joueur,s)
-        envoi_info(info,s)
+    token_info = reception_info(s)
+    if token_info>0:
+        choix = input("Que veux-tu faire ? (indice/poser)")
+        envoi_info(choix,s)
+        if choix == "indice":
+            joueur = input("Sur la main de quel joueur veux-tu donner une info ?")
+            info = input("Ecrire l'info à partager (une couleur/un nombre): ")
+            print("---------------------------------")
+            envoi_info(joueur,s)
+            envoi_info(info,s)
+        else:
+            carte_choisie = input("Quelle est la carte que vous souhaitez poser (Choisir un entier entre 1 et 5):")
+            envoi_info(carte_choisie,s)
     else:
-        carte_choisie = input("Quelle est la carte que vous souhaitez poser (Choisir un entier entre 1 et 5):")
+        envoi_info("poser",s)
+        carte_choisie = input("Vous n'avez plus de jetons d'information, veuillez choisir une carte à poser (entier entre 1 et 5)")
         envoi_info(carte_choisie,s)
     print("FIN DU TOUR")
     print("---------------------------------")
@@ -79,6 +85,7 @@ def client_program():
 
     while True:
         tour = reception_info(client_socket)
+
         if  tour == num_joueur:
             mon_tour(client_socket)
 
