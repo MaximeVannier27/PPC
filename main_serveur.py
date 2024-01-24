@@ -3,7 +3,7 @@ from threading import Lock,Thread
 from multiprocessing import Process, Manager, Event, Semaphore, Value
 from multiprocessing import Lock as mLock
 from joueur_process import joueur_process
-from fonction_serveur import main_server, distribution,piocheCarte
+from fonction_serveur import main_server, distribution
 import threading      
 from sysv_ipc import MessageQueue,IPC_CREAT
 import signal
