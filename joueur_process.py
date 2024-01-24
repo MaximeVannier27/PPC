@@ -1,6 +1,7 @@
-import multiprocessing
+from multiprocessing import Value,Event
 import time
 import pickle
+from ast import literal_eval as ev
 
 def reception_info(chaussette):
     data = chaussette.recv(1024)
@@ -13,6 +14,12 @@ def envoi_info(data_brut,chaussette):
         chaussette.send(data)
     else:
         chaussette.send(data_brut)
+
+def decodet(message):
+    """
+    Permet de récuper directement un tuple à partir des données reçue dans la messagequeue
+    """
+    return ev(message.decode())
 
 
 def envoi_mains(num_joueur,shared_memory_dic,s):
@@ -50,6 +57,42 @@ def envoi_mains(num_joueur,shared_memory_dic,s):
     #shared_memory_dic["shared"].release()
 
 
+#DEF ENVOI ETAT DES SUITES
+
+
+def mon_tour(num_joueur,shared_memory_dic, message_queue_dic, s, synchro):
+    synchro.clear()
+    envoi_info(str(num_joueur),s)
+    choix_client = reception_info(s)
+    #GERER L'ABSCENCE DE TOKENS INFORMATION
+    if choix_client == "indice":
+        joueur_vise = reception_info(s)
+        info_donnee = reception_info(s)
+        for j,mq in message_queue_dic.items():
+            if j!= num_joueur:
+                mq.send(str((joueur_vise,info_donnee)).encode(),type=3)
+        synchro.set()
+
+    else:
+        indice_carte_choisie = reception_info(s)
+        # au serveur --> envoyer l'indice
+        shared_memory_dic["sem"].release()
+        message_queue_dic[f"{num_joueur}"].send(indice_carte_choisie.encode(),type=2)
+
+        # aux autres process --> retrouver le tuple de la carte
+        carte_choisie = shared_memory_dic["mains"][f"joueur_{num_joueur}"][indice_carte_choisie-1]
+        for j,mq in message_queue_dic.items():
+            if j!= num_joueur:
+                mq.send(str(carte_choisie).encode(), type = 2)
+
+    shared_memory_dic["shared"].acquire()
+    shared_memory_dic["tour"].value = (shared_memory_dic["tour"].value + 1) % 3
+    shared_memory_dic["shared"].release()
+
+    synchro.wait()
+
+
+
 def joueur_process(num_joueur,shared_memory_dic, message_queue_dic, s,synchro):
     print(f"joueur {num_joueur} process waiting")
     synchro.wait()
@@ -64,6 +107,21 @@ def joueur_process(num_joueur,shared_memory_dic, message_queue_dic, s,synchro):
 
     while True:
         envoi_mains(num_joueur,shared_memory_dic,s)
+        envoi_info(str(shared_memory_dic["tour"].value),s)
+        if  shared_memory_dic["tour"].value == num_joueur:
+            mon_tour(num_joueur,shared_memory_dic, message_queue_dic, s, synchro)
+            
+
+
+
+        else:
+            envoi_info("0",s)
+
+
+
+
+
+
         break
         
     #     # Consulte la shared memory et envoie l'état du jeu au client

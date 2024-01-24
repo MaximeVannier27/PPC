@@ -62,8 +62,8 @@ if __name__ == "__main__":
     thread_pioche.join()
 
     #envoi d'un bit pour signaler le début de la partie directement aux sockets clients
-    for _,lst in dic_joueurs.items():
-          lst["client"].sendall(b'\x01')
+    for i,lst in dic_joueurs.items():
+          lst["client"].sendall(i[-1].encode('utf-8'))
 
     #Event signalant aux process joueurs le début de la partie
     synchro.set()
