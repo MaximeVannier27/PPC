@@ -39,46 +39,47 @@ def decodet(message):
 
 
 def main_server(shared_memory,pioche,dic_mq,erreurs,synchro):
-    print("main_server")
-    #attend qu'un joueur signale une pioche
-    shared_memory["sem"].acquire()
+    while True:
+        print("main_server")
+        #attend qu'un joueur sSignale une pioche
+        shared_memory["sem"].acquire()
 
-    #récupère l'acccès aux variables partagées
-    shared_memory["shared"].acquire()
+        #récupère l'acccès aux variables partagées
+        shared_memory["shared"].acquire()
 
-    #récupère l'info sur la carte piochée en écoutant sur la mq du joueur qui a posé
-    j = shared_memory["tour"].value
-    message, flag = dic_mq[f"{j}"].listen()
-    i_carte = int(message.decode())
-    (valeur,couleur) = shared_memory["mains"][f"{j}"][i_carte]
+        #récupère l'info sur la carte piochée en écoutant sur la mq du joueur qui a posé
+        j = shared_memory["tour"].value
+        message, flag = dic_mq[f"{j}"].listen()
+        i_carte = int(message.decode())
+        (valeur,couleur) = shared_memory["mains"][f"{j}"][i_carte]
 
-    if valeur != (shared_memory["suites"][couleur]+1):
-        erreurs-=1
-        if erreur<=0:
-            fin_partie(shared_memory,dic_mq,"erreur")
-            break
+        if valeur != (shared_memory["suites"][couleur]+1):
+            erreurs-=1
+            if erreur<=0:
+                fin_partie(shared_memory,dic_mq,"erreur")
+                break
 
-    elif valeur==5:
-        shared_memory["indices"]+=1
-        if shared_memory["suites"].values.count(5)==len(shared_memory["suites"].values):
-            fin_partie(shared_memory,dic_mq,"bouche")
-            break
+        elif valeur==5:
+            shared_memory["indices"]+=1
+            if shared_memory["suites"].values.count(5)==len(shared_memory["suites"].values):
+                fin_partie(shared_memory,dic_mq,"bouche")
+                break
 
-    else:
-        shared_memory["suites"][couleur]+=1
+        else:
+            shared_memory["suites"][couleur]+=1
 
-    #distribution d'une nouvelle carte au joueur qui a posé
-    if len(pioche)>0:
-        shared_memory["mains"][f"tour"][i_carte] = pioche.pop(randint(0,len(pioche)-1))
-    else:
-        shared_memory["mains"][f"tour"][i_carte] = (None,None)
+        #distribution d'une nouvelle carte au joueur qui a posé
+        if len(pioche)>0:
+            shared_memory["mains"][f"tour"][i_carte] = pioche.pop(randint(0,len(pioche)-1))
+        else:
+            shared_memory["mains"][f"tour"][i_carte] = (None,None)
 
-    #incrémentation du tour 
-    shared_memory["tour"]+=1
+        #incrémentation du tour 
+        shared_memory["tour"]+=1
 
-    #lance le tour suivant après avoir libéré le lock sur les variables partagées
-    shared_memory["shared"].release()
-    synchro.set()
+        #lance le tour suivant après avoir libéré le lock sur les variables partagées
+        shared_memory["shared"].release()
+        synchro.set()
 
 
 
