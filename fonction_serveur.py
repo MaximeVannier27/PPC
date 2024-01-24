@@ -87,7 +87,7 @@ def main_server(shared_memory,pioche,dic_mq,erreurs,synchro):
     
 def distribution(nombre_joueurs,pioche,shared_memory):
 
-    couleurs = ["rouge","vert","bleu","jaune","blanc"]
+    couleurs = ["rouge","vert","bleu","jaune","violet"]
     shared_memory["shared"].acquire()
 
     for color in range(nombre_joueurs):
