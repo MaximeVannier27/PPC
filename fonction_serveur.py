@@ -97,7 +97,7 @@ def distribution(nombre_joueurs,pioche,shared_memory):
         shared_memory["suites"][color]=0
 
     for i in range(1,nombre_joueurs+1):
-        shared_memory["mains"][f"{i}"]=[]
+        shared_memory["mains"][f"joueur_{i}"]=[]
         for j in range(5):
             carte=pioche.pop(randint(0,len(pioche)-1))
             shared_memory["mains"][f"joueur_{i}"]+=[carte]
