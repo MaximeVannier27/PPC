@@ -3,7 +3,7 @@ import sysv_ipc
 from ast import literal_eval as ev
 import signal
 import os
-
+ 
 def handler(sig,frame):
     if sig == signal.SIGUSR1:
         global dic_mq

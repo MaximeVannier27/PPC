@@ -8,9 +8,12 @@ def reception_info(chaussette):
     decoded_data = data.decode("utf-8")
     return decoded_data
 
-def envoi_info(data_str,chaussette):
-    data = data_str.encode('utf-8')
-    chaussette.send(data)
+def envoi_info(data_brut,chaussette):
+    if type(data_brut) != bytes:
+        data = data_brut.encode('utf-8')
+        chaussette.send(data)
+    else:
+        chaussette.send(data_brut)
 
 
 def client_program():
@@ -30,15 +33,33 @@ def client_program():
     print(pickle.loads(client_socket.recv(4096)))
 
     print("-------------------")
-    while True:
-        info_joueurs_codee = client_socket.recv(4096)
-        info_joueurs = pickle.loads(info_joueurs_codee)
-        if info_joueurs != pickle.dumps("STOP"):
+    nb_joueurs_exclu = int.from_bytes(client_socket.recv(1), byteorder='big')
+    
+
+    c = 1
+    while c < nb_joueurs_exclu:
+        # Recevoir la taille du message
+        taille_info = int.from_bytes(client_socket.recv(4), byteorder='big')
+    
+        # Recevoir les données
+        info_joueurs_codee = b""
+        while len(info_joueurs_codee) < taille_info:
+            chunk = client_socket.recv(min(4096, taille_info - len(info_joueurs_codee)))
+            if not chunk:
+                # Gérer une éventuelle fermeture de la connexion
+                break
+            info_joueurs_codee += chunk
+    
+        if len(info_joueurs_codee) == taille_info:
+            # Désérialiser les données
+            info_joueurs = pickle.loads(info_joueurs_codee)
+            
+            # Afficher les informations
             print(f"Main du joueur {info_joueurs[0]}:")
             print(f"{info_joueurs[1]}")
-        else:
-            break
-    print("STOP")
+        
+        c += 1
+    print("fin envoi mains")
     
     # Code pour demander la connexion, attendre les joueurs, etc.
 
@@ -55,9 +76,9 @@ def client_program():
     #         # C'est le tour du joueur
     #         user_action = input("Choisissez une action (indice/poser): ")
     #         client_socket.send(user_action.encode())
-
-
     client_socket.close()
 
 if __name__ == "__main__":
     client_program()
+
+ 

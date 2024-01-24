@@ -6,9 +6,10 @@ from joueur_process import joueur_process
 from fonction_serveur import main_server, distribution,piocheCarte
 import threading      
 from sysv_ipc import MessageQueue,IPC_CREAT
-import signal     
-    
-    
+import signal
+import time
+from fonction_serveur import *
+
 
 if __name__ == "__main__":
 
@@ -29,7 +30,7 @@ if __name__ == "__main__":
     shared = mLock()
     sem = Semaphore(0)
     suites=Manager().dict()
-    shared_memory = {"indices":indices,"mains":mains,"tour":tour,"shared":shared,"sem":sem,"suites":}
+    shared_memory = {"indices":indices,"mains":mains,"tour":tour,"shared":shared,"sem":sem,"suites":suites}
 
     synchro= Event()
     dic_mq = {}
@@ -52,7 +53,7 @@ if __name__ == "__main__":
         print("En l'attente de joueurs...")
         client, addr = server_socket.accept()
         print(f"Joueur {c} connecté ({addr})")
-        joueur = Process(target=joccccueur_process, args=(c,shared_memory, dic_mq,client,synchro))
+        joueur = Process(target=joueur_process, args=(c,shared_memory, dic_mq,client,synchro))
         joueur.start()
         dic_joueurs[f"joueur_{c}"] = {"client":client,"addresse":addr,"process":joueur}
         c+=1
