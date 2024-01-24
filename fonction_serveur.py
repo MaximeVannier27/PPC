@@ -55,7 +55,7 @@ def main_server(shared_memory,pioche,dic_mq,erreurs,synchro):
 
         if valeur != (shared_memory["suites"][couleur]+1):
             erreurs-=1
-            if erreur<=0:
+            if erreurs<=0:
                 fin_partie(shared_memory,dic_mq,"erreur")
                 break
 
