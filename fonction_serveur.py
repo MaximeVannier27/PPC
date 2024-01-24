@@ -3,33 +3,26 @@ import sysv_ipc
 from ast import literal_eval as ev
 import signal
 import os
- 
-def handler(sig,frame):
-    if sig == signal.SIGUSR1:
-        global dic_mq
-        dic_mq
+from joueur_process import envoi_info
+
 
 def fin_partie(shared_memory,dic_mq,typefin):
     global dic_joueurs
 
     if typefin=="erreur":
-        print("Il n'y a plus de jetons erreurs, la partie est terminée!")
-        flag=47
         score = 0
         for chiffre in shared_memory["suites"].values():
             score+=chiffre
+        message = f"Il n'y a plus de jetons erreurs, la partie est terminée! Le score final est de {score}"
         
     else:
-        print("La partie est terminée, toutes les suites sont complètes!")
-        flag=43
         score=5*len(dic_mq.values())
+        message = f"La partie est terminée, toutes les suites sont complètes! Le score final est de {score}"
 
     for i in range(len(dic_mq.values())):
         os.kill(dic_joueurs[f"joueur_{i}"]["process"].pid, signal.SIGUSR1)
-        score.encode()
-        dic_mq[f"{i}"].send(score,type=flag)
-
-    
+        envoi_info(message,dic_joueurs[f"joueur_{i}"]["client"])
+        
 
 def decodet(message):
     """

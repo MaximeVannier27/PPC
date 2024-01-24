@@ -1,6 +1,10 @@
 import multiprocessing
 import time
 import pickle
+import signal
+import os
+from main_serveur import handler
+
 
 def reception_info(chaussette):
     data = chaussette.recv(1024)
@@ -16,6 +20,7 @@ def envoi_info(data_brut,chaussette):
 
 
 def envoi_mains(num_joueur,shared_memory_dic,s):
+    
     global main_actuelle
     global connaissance
 

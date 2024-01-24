@@ -10,6 +10,11 @@ import signal
 import time
 from fonction_serveur import *
 
+def handler(sig,frame):
+    if sig == signal.SIGUSR1:
+        process = os.getpid()
+        print(f"Destruction du process client {process}")
+        os.kill(os.getpid(),signal.SIGKILL)
 
 if __name__ == "__main__":
 
@@ -69,9 +74,12 @@ if __name__ == "__main__":
     synchro.set()
 
     #lancement de la partie côté serveur
-    while True:
-        main_server(shared_memory,pioche,dic_mq,erreurs,synchro)
+    main_server(shared_memory,pioche,dic_mq,erreurs,synchro)
 
     #fermeture des connexions client
-    server_socket.close()
+    for joueur in dic_joueurs:
+        joueur["client"].close()
+
     #fermeture des mq
+    for mq in dic_mq.values():
+        mq.remove()
