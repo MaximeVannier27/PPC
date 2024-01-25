@@ -15,16 +15,38 @@ def envoi_info(data_brut,chaussette):
     else:
         chaussette.send(data_brut)
 
+def mon_tour(s):
+    print("C'est ton tour !")
+    token_info = reception_info(s)
+    if token_info>0:
+        choix = input("Que veux-tu faire ? (indice/poser)")
+        envoi_info(choix,s)
+        if choix == "indice":
+            joueur = input("Sur la main de quel joueur veux-tu donner une info ?")
+            info = input("Ecrire l'info à partager (une couleur/un nombre): ")
+            print("---------------------------------")
+            envoi_info(joueur,s)
+            envoi_info(info,s)
+        else:
+            carte_choisie = input("Quelle est la carte que vous souhaitez poser (Choisir un entier entre 1 et 5):")
+            envoi_info(carte_choisie,s)
+    else:
+        envoi_info("poser",s)
+        carte_choisie = input("Vous n'avez plus de jetons d'information, veuillez choisir une carte à poser (entier entre 1 et 5)")
+        envoi_info(carte_choisie,s)
+    print("FIN DU TOUR")
+    print("---------------------------------")
 
 def client_program():
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client_socket.connect(('localhost', 8000))  # Replace with your server details
+    client_socket.connect(('localhost', 8000)) 
     print("Connecté au serveur !")
     print("---------------------")
     print("En attente des autres joueurs...")
 
-    client_socket.recv(1)
+    num_joueur = reception_info(client_socket)
     print("TOUT LE MONDE EST CONNECTE")
+    print("VOUS ETES LE JOUEUR",num_joueur)
     print("-------------------")
 
     """DEBUT DE TOUR CLIENT"""
@@ -35,7 +57,7 @@ def client_program():
     print("-------------------")
     nb_joueurs_exclu = int.from_bytes(client_socket.recv(1), byteorder='big')
     
-
+    #Reception des mains des autres joueurs
     c = 1
     while c < nb_joueurs_exclu:
         # Recevoir la taille du message
@@ -57,9 +79,31 @@ def client_program():
             # Afficher les informations
             print(f"Main du joueur {info_joueurs[0]}:")
             print(f"{info_joueurs[1]}")
-        
         c += 1
+    
     print("fin envoi mains")
+
+    #RECEPTION ETAT DES SUITES
+
+    suites = pickle.loads(client_socket.recv(4096))
+    print("Etat actuel des suites:")
+    print(suites)
+
+
+
+    while True:
+        tour = reception_info(client_socket)
+
+        if  tour == num_joueur:
+            mon_tour(client_socket)
+
+        
+
+        else:
+            #pas_mon_tour()
+            pass
+        
+        break
     
     # Code pour demander la connexion, attendre les joueurs, etc.
 

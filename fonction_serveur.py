@@ -1,6 +1,5 @@
 from random import randint
 import sysv_ipc
-from ast import literal_eval as ev
 import signal
 import os
 from joueur_process import envoi_info
@@ -24,11 +23,7 @@ def fin_partie(shared_memory,dic_mq,typefin):
         envoi_info(message,dic_joueurs[f"joueur_{i}"]["client"])
         
 
-def decodet(message):
-    """
-    Permet de récuper directement un tuple à partir des données reçue dans la messagequeue
-    """
-    return ev(message.decode())
+
 
 
 def main_server(shared_memory,pioche,dic_mq,erreurs,synchro):
