@@ -38,6 +38,7 @@ def main_server(shared_memory,pioche,dic_mq,erreurs,synchro):
         #récupère l'info sur la carte piochée en écoutant sur la mq du joueur qui a posé
         j = shared_memory["tour"].value
         message, flag = dic_mq[f"{j}"].receive()
+
         i_carte = int(message.decode())
         (valeur,couleur) = shared_memory["mains"][f"{j}"][i_carte]
 
@@ -58,12 +59,12 @@ def main_server(shared_memory,pioche,dic_mq,erreurs,synchro):
 
         #distribution d'une nouvelle carte au joueur qui a posé
         if len(pioche)>0:
-            shared_memory["mains"][f"tour"][i_carte] = pioche.pop(randint(0,len(pioche)-1))
+            shared_memory["mains"][f"{j}"][i_carte] = pioche.pop(randint(0,len(pioche)-1))
         else:
-            shared_memory["mains"][f"tour"][i_carte] = (None,None)
+            shared_memory["mains"][f"{j}"][i_carte] = (None,None)
 
         #incrémentation du tour 
-        shared_memory["tour"]+=1
+        shared_memory["tour"]=j%len(dic_mq)+1
 
         #lance le tour suivant après avoir libéré le lock sur les variables partagées
         shared_memory["shared"].release()
