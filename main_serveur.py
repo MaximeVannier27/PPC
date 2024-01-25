@@ -23,7 +23,7 @@ if __name__ == "__main__":
 
     #initialisation des variables
     mains = Manager().dict()
-    tour = Value('I',0,lock=False)
+    tour = Value('I',1,lock=False)
     n_indices = nombre_joueurs + 3
     indices = Value('I',n_indices,lock=False)
     shared = mLock()
@@ -32,6 +32,7 @@ if __name__ == "__main__":
     shared_memory = {"indices":indices,"mains":mains,"tour":tour,"shared":shared,"sem":sem,"suites":suites}
 
     synchro= Event()
+    debut = Event()
     dic_mq = {}
     pioche = []
     erreurs = 3 
@@ -52,7 +53,7 @@ if __name__ == "__main__":
         print("En l'attente de joueurs...")
         client, addr = server_socket.accept()
         print(f"Joueur {c} connecté ({addr})")
-        joueur = Process(target=joueur_process, args=(c,shared_memory, dic_mq,client,synchro))
+        joueur = Process(target=joueur_process, args=(c,shared_memory, dic_mq,client,synchro,debut))
         joueur.start()
         dic_joueurs[f"joueur_{c}"] = {"client":client,"addresse":addr,"process":joueur}
         c+=1
@@ -65,11 +66,11 @@ if __name__ == "__main__":
           lst["client"].sendall(i[-1].encode('utf-8'))
 
     #Event signalant aux process joueurs le début de la partie
-    synchro.set()
+    debut.set()
 
     #lancement de la partie côté serveur
     main_server(shared_memory,pioche,dic_mq,erreurs,synchro)
-
+    print("FININIFNFINFINFIFNI")
     #fermeture des connexions client
     for joueur in dic_joueurs:
         joueur["client"].close()

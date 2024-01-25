@@ -40,7 +40,7 @@ def envoi_mains(num_joueur,shared_memory_dic,s):
     global connaissance
 
     """ATTENTION AUX CLES DES SHARED MEMORY"""
-    #shared_memory_dic["shared"].acquire()
+    shared_memory_dic["shared"].acquire()
     main_actuelle = shared_memory_dic["mains"][f"joueur_{num_joueur}"]
     main_client = []
 
@@ -67,7 +67,7 @@ def envoi_mains(num_joueur,shared_memory_dic,s):
             envoi_info(len(data_main_joueurs).to_bytes(4, byteorder='big'), s)
             envoi_info(data_main_joueurs, s)
     print("fin envoi mains")
-    #shared_memory_dic["shared"].release()
+    shared_memory_dic["shared"].release()
 
 
 def envoi_suites(shared_memory_dic,s):
@@ -84,9 +84,11 @@ def mon_tour(num_joueur,shared_memory_dic, message_queue_dic, s, synchro):
     #GERER L'ABSCENCE DE TOKENS INFORMATION
     if choix_client == "indice":
         joueur_vise = reception_info(s)
+        print(joueur_vise)
         info_donnee = reception_info(s)
         for j,mq in message_queue_dic.items():
             if j!= num_joueur:
+                print(j)
                 mq.send(str((joueur_vise,info_donnee)).encode(),type=3)
         synchro.set()
 
@@ -103,16 +105,17 @@ def mon_tour(num_joueur,shared_memory_dic, message_queue_dic, s, synchro):
                 mq.send(str(carte_choisie).encode(), type = 2)
 
     shared_memory_dic["shared"].acquire()
-    shared_memory_dic["tour"].value = (shared_memory_dic["tour"].value + 1) % len(message_queue_dic)
+    shared_memory_dic["tour"].value = (shared_memory_dic["tour"].value % len(message_queue_dic))+1
     shared_memory_dic["shared"].release()
 
     synchro.wait()
 
 def pas_mon_tour(moi,socket,dic_mq,shared_memory_dic,synchro):
-    tour=int(shared_memory_dic["tour"].value)+1
+    tour=int(shared_memory_dic["tour"].value)
     receipt, t = dic_mq[f"{tour}"].receive()
     if t==3:
         (joueur,indice) = decodet(receipt)
+        print(joueur)
         if joueur==moi:
             info = f"Le joueur {tour} vous informe sur vos cartes {indice}"
             global connaissance
@@ -134,9 +137,9 @@ def pas_mon_tour(moi,socket,dic_mq,shared_memory_dic,synchro):
 
     synchro.wait()
 
-def joueur_process(num_joueur,shared_memory_dic, message_queue_dic, s,synchro):
+def joueur_process(num_joueur,shared_memory_dic, message_queue_dic, s,synchro,debut):
     print(f"joueur {num_joueur} process waiting")
-    synchro.wait()
+    debut.wait()
 
     print("Le jeu commence !")
     global main_actuelle
@@ -147,6 +150,7 @@ def joueur_process(num_joueur,shared_memory_dic, message_queue_dic, s,synchro):
     
 
     while True:
+        print("envoi mains ",num_joueur)
         envoi_mains(num_joueur,shared_memory_dic,s)
         envoi_suites(shared_memory_dic,s)
         envoi_info(str(shared_memory_dic["tour"].value),s)

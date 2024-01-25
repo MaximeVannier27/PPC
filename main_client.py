@@ -128,7 +128,7 @@ def client_program():
     #         # C'est le tour du joueur
     #         user_action = input("Choisissez une action (indice/poser): ")
     #         client_socket.send(user_action.encode())
-    client_socket.close()
+
 
 if __name__ == "__main__":
     client_program()
