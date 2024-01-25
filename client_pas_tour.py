@@ -5,10 +5,10 @@ from test import affichecarte
 def pas_mon_tour(moi,socket,dic_mq,shared_memory_dic,synchro):
     tour=shared_memory_dic["tour"]
     receipt, t = dic_mq[f"{joueur}"].receive()
-    if t==1:
+    if t==3:
         (joueur,indice) = decodet(receipt)
         if joueur==moi:
-            info = f"Le joueur {joueur} vous informe sur vos cartes {indice}"
+            info = f"Le joueur {tour+1} vous informe sur vos cartes {indice}"
             global connaissance
             mescartes=shared_memory_dic["mains"][f"joueur_{moi}"]
 
@@ -19,11 +19,11 @@ def pas_mon_tour(moi,socket,dic_mq,shared_memory_dic,synchro):
                 elif str(mescartes[0][i])==indice:
                     connaissance[0][i]=True
         else:
-            info = f"Le joueur{tour} a informé le joueur{joueur} sur ses cartes {indice}"
-            
+            info = f"Le joueur{tour+1} a informé le joueur{joueur} sur ses cartes {indice}"
+
     if t==2: 
         (valeur,couleur) = decodet(receipt)
-        info = f"Le joueur{tour} a posé une carte" + affichecarte(valeur,couleur)
+        info = f"Le joueur{tour+1} a posé une carte" + affichecarte(valeur,couleur)
     envoi_info(info,socket)
 
     synchro.wait()
