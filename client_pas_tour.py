@@ -11,12 +11,16 @@ def pas_mon_tour(moi,socket,dic_mq,shared_memory_dic,synchro):
             info = f"Le joueur {joueur} vous informe sur vos cartes {indice}"
             global connaissance
             mescartes=shared_memory_dic["mains"][f"joueur_{moi}"]
+
+            #update des connaissances du joueur en fonction de l'indice reçu
             for i in range(connaissance):
-                if str(connaissance[i][0])==indice:
-                    pass
-                #update de connaissances, c'est pas fini
+                if str(mescartes[i][0])==indice:
+                    connaissance[i][0]=True
+                elif str(mescartes[0][i])==indice:
+                    connaissance[0][i]=True
         else:
             info = f"Le joueur{tour} a informé le joueur{joueur} sur ses cartes {indice}"
+            
     if t==2: 
         (valeur,couleur) = decodet(receipt)
         info = f"Le joueur{tour} a posé une carte" + affichecarte(valeur,couleur)

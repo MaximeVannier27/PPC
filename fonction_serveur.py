@@ -87,7 +87,7 @@ def distribution(nombre_joueurs,pioche,shared_memory):
         pioche+= [(1,couleurs[color])]*3
         pioche+= [(2,couleurs[color]),(3,couleurs[color]),(4,couleurs[color])]*2
         pioche+= [(5,couleurs[color])]
-        shared_memory["suites"][color]=0
+        shared_memory["suites"][couleurs[color]]=0
 
     for i in range(1,nombre_joueurs+1):
         shared_memory["mains"][f"joueur_{i}"]=[]
