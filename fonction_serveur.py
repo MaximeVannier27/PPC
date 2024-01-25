@@ -37,7 +37,7 @@ def main_server(shared_memory,pioche,dic_mq,erreurs,synchro):
 
         #récupère l'info sur la carte piochée en écoutant sur la mq du joueur qui a posé
         j = shared_memory["tour"].value
-        message, flag = dic_mq[f"{j}"].listen()
+        message, flag = dic_mq[f"{j}"].receive()
         i_carte = int(message.decode())
         (valeur,couleur) = shared_memory["mains"][f"{j}"][i_carte]
 

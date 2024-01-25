@@ -2,6 +2,8 @@ import socket
 import pickle
 import threading
 import time
+from test import affichecarte,affichemain
+
 
 def reception_info(chaussette):
     data = chaussette.recv(1024)
@@ -17,7 +19,7 @@ def envoi_info(data_brut,chaussette):
 
 def mon_tour(s):
     print("C'est ton tour !")
-    token_info = reception_info(s)
+    token_info = int(reception_info(s))
     if token_info>0:
         choix = input("Que veux-tu faire ? (indice/poser)")
         envoi_info(choix,s)
@@ -37,6 +39,12 @@ def mon_tour(s):
     print("FIN DU TOUR")
     print("---------------------------------")
 
+def pas_mon_tour(s):
+    print("Ce n'est pas ton tour, en attente d'actions d'autres joueurs...")
+    affichage_info = reception_info(s)
+    print(affichage_info)
+
+
 def client_program():
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client_socket.connect(('localhost', 8000)) 
@@ -52,7 +60,7 @@ def client_program():
     """DEBUT DE TOUR CLIENT"""
 
     print("Voici votre jeu: ")
-    print(pickle.loads(client_socket.recv(4096)))
+    affichemain(pickle.loads(client_socket.recv(4096)))
 
     print("-------------------")
     nb_joueurs_exclu = int.from_bytes(client_socket.recv(1), byteorder='big')
@@ -78,7 +86,7 @@ def client_program():
             
             # Afficher les informations
             print(f"Main du joueur {info_joueurs[0]}:")
-            print(f"{info_joueurs[1]}")
+            affichemain(info_joueurs[1])
         c += 1
     
     print("fin envoi mains")
@@ -87,7 +95,7 @@ def client_program():
 
     suites = pickle.loads(client_socket.recv(4096))
     print("Etat actuel des suites:")
-    print(suites)
+    affichemain(suites)
 
 
 
@@ -100,7 +108,7 @@ def client_program():
         
 
         else:
-            #pas_mon_tour()
+            pas_mon_tour(client_socket)
             pass
         
         break

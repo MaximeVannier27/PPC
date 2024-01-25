@@ -1,12 +1,18 @@
 from multiprocessing import Value,Event
 import time
 import pickle
-
+from test import affichecarte
 from ast import literal_eval as ev
 import signal
 import os
-from main_serveur import handler
 
+
+
+def handler(sig,frame):
+    if sig == signal.SIGUSR1:
+        process = os.getpid()
+        print(f"Destruction du process client {process}")
+        os.kill(os.getpid(),signal.SIGKILL)
 
 
 def reception_info(chaussette):
@@ -64,15 +70,12 @@ def envoi_mains(num_joueur,shared_memory_dic,s):
     #shared_memory_dic["shared"].release()
 
 
-#DEF ENVOI ETAT DES SUITES
 def envoi_suites(shared_memory_dic,s):
     envoi = []
-    for c,v in shared_memory_dic["suites"]:
-        envoi.append((c,v))
+    for c,v in shared_memory_dic["suites"].items():
+        envoi.append((v,c))
     envoi_info(pickle.dumps(envoi),s)
     
-
-
 
 def mon_tour(num_joueur,shared_memory_dic, message_queue_dic, s, synchro):
     synchro.clear()
@@ -94,18 +97,42 @@ def mon_tour(num_joueur,shared_memory_dic, message_queue_dic, s, synchro):
         message_queue_dic[f"{num_joueur}"].send(indice_carte_choisie.encode(),type=2)
 
         # aux autres process --> retrouver le tuple de la carte
-        carte_choisie = shared_memory_dic["mains"][f"joueur_{num_joueur}"][indice_carte_choisie-1]
+        carte_choisie = shared_memory_dic["mains"][f"joueur_{num_joueur}"][int(indice_carte_choisie)-1]
         for j,mq in message_queue_dic.items():
             if j!= num_joueur:
                 mq.send(str(carte_choisie).encode(), type = 2)
 
     shared_memory_dic["shared"].acquire()
-    shared_memory_dic["tour"].value = (shared_memory_dic["tour"].value + 1) % 3
+    shared_memory_dic["tour"].value = (shared_memory_dic["tour"].value + 1) % len(message_queue_dic)
     shared_memory_dic["shared"].release()
 
     synchro.wait()
 
+def pas_mon_tour(moi,socket,dic_mq,shared_memory_dic,synchro):
+    tour=int(shared_memory_dic["tour"].value)+1
+    receipt, t = dic_mq[f"{tour}"].receive()
+    if t==3:
+        (joueur,indice) = decodet(receipt)
+        if joueur==moi:
+            info = f"Le joueur {tour} vous informe sur vos cartes {indice}"
+            global connaissance
+            mescartes=shared_memory_dic["mains"][f"joueur_{moi}"]
 
+            #update des connaissances du joueur en fonction de l'indice reçu
+            for i in range(connaissance):
+                if str(mescartes[i][0])==indice:
+                    connaissance[i][0]=True
+                elif str(mescartes[0][i])==indice:
+                    connaissance[0][i]=True
+        else:
+            info = f"Le joueur{tour} a informé le joueur{joueur} sur ses cartes {indice}"
+            
+    if t==2: 
+        (valeur,couleur) = decodet(receipt)
+        info = f"Le joueur{tour} a posé une carte" + affichecarte(valeur,couleur)
+    envoi_info(info,socket)
+
+    synchro.wait()
 
 def joueur_process(num_joueur,shared_memory_dic, message_queue_dic, s,synchro):
     print(f"joueur {num_joueur} process waiting")
@@ -114,9 +141,9 @@ def joueur_process(num_joueur,shared_memory_dic, message_queue_dic, s,synchro):
     print("Le jeu commence !")
     global main_actuelle
     global connaissance
-    connaissance = [[True,True] for i in range(5)]
+    connaissance = [[False,False] for i in range(5)]
 
-
+    signal.signal(signal.SIGUSR1, handler)
     
 
     while True:
@@ -130,21 +157,7 @@ def joueur_process(num_joueur,shared_memory_dic, message_queue_dic, s,synchro):
 
 
         else:
-            envoi_info("0",s)
-
-
-
-
-
-
-        break
-        
-    #     # Consulte la shared memory et envoie l'état du jeu au client
-    #     # Attente sur la message queue pour les actions du joueur
-    #     # Envoi des messages sur l'action réalisée au client
-    #     # Attente du signal de lancement du tour suivant
+            pas_mon_tour(num_joueur,s,message_queue_dic,shared_memory_dic,synchro)
 
     s.close()
-
-    #     pass
 

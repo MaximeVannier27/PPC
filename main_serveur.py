@@ -3,18 +3,13 @@ from threading import Lock,Thread
 from multiprocessing import Process, Manager, Event, Semaphore, Value
 from multiprocessing import Lock as mLock
 from joueur_process import joueur_process
-from fonction_serveur import main_server, distribution
 import threading      
 from sysv_ipc import MessageQueue,IPC_CREAT
 import signal
 import time
 from fonction_serveur import *
 
-def handler(sig,frame):
-    if sig == signal.SIGUSR1:
-        process = os.getpid()
-        print(f"Destruction du process client {process}")
-        os.kill(os.getpid(),signal.SIGKILL)
+
 
 if __name__ == "__main__":
 
@@ -23,13 +18,12 @@ if __name__ == "__main__":
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.bind(('localhost', 8000))
     server_socket.listen(nombre_joueurs)
-
-    #initialisation du handler de fin de partie
-    signal.signal(signal.SIGUSR1, handler)
+ 
+    
 
     #initialisation des variables
     mains = Manager().dict()
-    tour = Value('I',1,lock=False)
+    tour = Value('I',0,lock=False)
     n_indices = nombre_joueurs + 3
     indices = Value('I',n_indices,lock=False)
     shared = mLock()
