@@ -6,14 +6,18 @@ from test import affichecarte,affichemain
 
 
 def reception_info(chaussette):
-    data = chaussette.recv(1024)
-    decoded_data = data.decode("utf-8")
-    return decoded_data
-
+    data_code = chaussette.recv(1)
+    data = data_code.decode("utf-8")
+    res=""
+    while data != "@":
+        res+= data
+        data_code = chaussette.recv(1)
+        data = data_code.decode("utf-8")
+    return res
 def envoi_info(data_brut,chaussette):
     if type(data_brut) != bytes:
-        data = data_brut.encode('utf-8')
-        chaussette.send(data)
+        data = data_brut +"@"
+        chaussette.send(data.encode("utf-8"))
     else:
         chaussette.send(data_brut)
 
@@ -97,12 +101,13 @@ def client_program():
     print("Etat actuel des suites:")
     affichemain(suites)
 
+####################################################################################
 
 
     while True:
-        tour = reception_info(client_socket)
-
-        if  tour == num_joueur:
+        tour = int(reception_info(client_socket))
+        print(tour,num_joueur)
+        if  int(tour) == int(num_joueur):
             mon_tour(client_socket)
 
         

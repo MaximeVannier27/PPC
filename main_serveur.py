@@ -63,7 +63,7 @@ if __name__ == "__main__":
 
     #envoi d'un bit pour signaler le début de la partie directement aux sockets clients
     for i,lst in dic_joueurs.items():
-          lst["client"].sendall(i[-1].encode('utf-8'))
+        envoi_info(i[-1],lst["client"])
 
     #Event signalant aux process joueurs le début de la partie
     debut.set()
