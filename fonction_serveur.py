@@ -2,33 +2,26 @@ from random import randint
 import sysv_ipc
 import signal
 import os
- 
-def handler(sig,frame):
-    if sig == signal.SIGUSR1:
-        global dic_mq
-        dic_mq
+from joueur_process import envoi_info
+
 
 def fin_partie(shared_memory,dic_mq,typefin):
     global dic_joueurs
 
     if typefin=="erreur":
-        print("Il n'y a plus de jetons erreurs, la partie est terminée!")
-        flag=47
         score = 0
         for chiffre in shared_memory["suites"].values():
             score+=chiffre
+        message = f"Il n'y a plus de jetons erreurs, la partie est terminée! Le score final est de {score}"
         
     else:
-        print("La partie est terminée, toutes les suites sont complètes!")
-        flag=43
         score=5*len(dic_mq.values())
+        message = f"La partie est terminée, toutes les suites sont complètes! Le score final est de {score}"
 
     for i in range(len(dic_mq.values())):
         os.kill(dic_joueurs[f"joueur_{i}"]["process"].pid, signal.SIGUSR1)
-        score.encode()
-        dic_mq[f"{i}"].send(score,type=flag)
-
-    
+        envoi_info(message,dic_joueurs[f"joueur_{i}"]["client"])
+        
 
 
 
@@ -82,14 +75,14 @@ def main_server(shared_memory,pioche,dic_mq,erreurs,synchro):
     
 def distribution(nombre_joueurs,pioche,shared_memory):
 
-    couleurs = ["rouge","vert","bleu","jaune","blanc"]
+    couleurs = ["rouge","vert","bleu","jaune","violet"]
     shared_memory["shared"].acquire()
 
     for color in range(nombre_joueurs):
         pioche+= [(1,couleurs[color])]*3
         pioche+= [(2,couleurs[color]),(3,couleurs[color]),(4,couleurs[color])]*2
         pioche+= [(5,couleurs[color])]
-        shared_memory["suites"][color]=0
+        shared_memory["suites"][couleurs[color]]=0
 
     for i in range(1,nombre_joueurs+1):
         shared_memory["mains"][f"joueur_{i}"]=[]

@@ -1,7 +1,13 @@
 from multiprocessing import Value,Event
 import time
 import pickle
+
 from ast import literal_eval as ev
+import signal
+import os
+from main_serveur import handler
+
+
 
 def reception_info(chaussette):
     data = chaussette.recv(1024)
@@ -23,6 +29,7 @@ def decodet(message):
 
 
 def envoi_mains(num_joueur,shared_memory_dic,s):
+    
     global main_actuelle
     global connaissance
 
