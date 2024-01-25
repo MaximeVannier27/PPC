@@ -57,7 +57,7 @@ def client_program():
     print("-------------------")
     nb_joueurs_exclu = int.from_bytes(client_socket.recv(1), byteorder='big')
     
-
+    #Reception des mains des autres joueurs
     c = 1
     while c < nb_joueurs_exclu:
         # Recevoir la taille du message
@@ -82,6 +82,14 @@ def client_program():
         c += 1
     
     print("fin envoi mains")
+
+    #RECEPTION ETAT DES SUITES
+
+    suites = pickle.loads(client_socket.recv(4096))
+    print("Etat actuel des suites:")
+    print(suites)
+
+
 
     while True:
         tour = reception_info(client_socket)

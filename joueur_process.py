@@ -58,11 +58,18 @@ def envoi_mains(num_joueur,shared_memory_dic,s):
 
 
 #DEF ENVOI ETAT DES SUITES
+def envoi_suites(shared_memory_dic,s):
+    envoi = []
+    for c,v in shared_memory_dic["suites"]:
+        envoi.append((c,v))
+    envoi_info(pickle.dumps(envoi),s)
+    
+
 
 
 def mon_tour(num_joueur,shared_memory_dic, message_queue_dic, s, synchro):
     synchro.clear()
-    envoi_info(str(num_joueur),s)
+    envoi_info(str(shared_memory_dic["indices"].value),s)
     choix_client = reception_info(s)
     #GERER L'ABSCENCE DE TOKENS INFORMATION
     if choix_client == "indice":
@@ -107,6 +114,7 @@ def joueur_process(num_joueur,shared_memory_dic, message_queue_dic, s,synchro):
 
     while True:
         envoi_mains(num_joueur,shared_memory_dic,s)
+        envoi_suites(shared_memory_dic,s)
         envoi_info(str(shared_memory_dic["tour"].value),s)
         if  shared_memory_dic["tour"].value == num_joueur:
             mon_tour(num_joueur,shared_memory_dic, message_queue_dic, s, synchro)
