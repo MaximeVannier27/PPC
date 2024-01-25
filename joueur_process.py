@@ -16,18 +16,15 @@ def handler(sig,frame):
 
 
 def reception_info(chaussette):
-    data_code = chaussette.recv(1)
-    data = data_code.decode("utf-8")
-    res=""
-    while data != "@":
-        res+= data
-        data_code = chaussette.recv(1)
-        data = data_code.decode("utf-8")
+    demande = "demande"
+    chaussette.send(demande.encode('utf-8'))
+    res_code = chaussette.recv(1024)
+    res = res_code.decode("utf-8")
     return res
 
 def envoi_info(data_brut,chaussette):
     if type(data_brut) != bytes:
-        data = data_brut +"@"
+        data = data_brut
         chaussette.send(data.encode("utf-8"))
     else:
         chaussette.send(data_brut)
