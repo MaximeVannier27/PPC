@@ -8,15 +8,15 @@ from sysv_ipc import MessageQueue,IPC_CREAT
 import signal
 import time
 from fonction_serveur import *
-
-
+        
 
 if __name__ == "__main__":
 
     nombre_joueurs = int(input("Combien de joueurs vont se connecter ?\n--> "))
 
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server_socket.bind(('localhost', 8000))
+    port = int(input("port: "))
+    server_socket.bind(('localhost', port))
     server_socket.listen(nombre_joueurs)
  
     
@@ -35,7 +35,7 @@ if __name__ == "__main__":
     debut = Event()
     dic_mq = {}
     pioche = []
-    erreurs = 3 
+    erreurs = 1 #normalement c'est 3
 
     #création d'une messagequeue pour chacun des joueurs
     for i in range(1,nombre_joueurs+1):
@@ -69,11 +69,13 @@ if __name__ == "__main__":
     debut.set()
 
     #lancement de la partie côté serveur
-    main_server(shared_memory,pioche,dic_mq,erreurs,synchro)
+    fin = main_server(shared_memory,pioche,dic_mq,erreurs,synchro)
+    fin_partie(shared_memory,dic_mq,fin,dic_joueurs)
     print("FININIFNFINFINFIFNI")
     #fermeture des connexions client
-    for joueur in dic_joueurs:
-        joueur["client"].close()
+    for joueur in dic_joueurs.keys():
+        finsocket = dic_joueurs[joueur]["client"]
+        finsocket.close()
 
     #fermeture des mq
     for mq in dic_mq.values():

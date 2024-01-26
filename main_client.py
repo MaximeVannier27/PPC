@@ -7,36 +7,41 @@ from test import affichecarte,affichemain
 
 def reception_info(chaussette):
     res_code = chaussette.recv(1024)
-    res = res_code.decode("utf-8")
+    res = res_code.decode()
+
     return res
 
 def envoi_info(data_brut,chaussette):
-    if chaussette.recv(1024).decode("utf-8") == "demande":
-        if type(data_brut) != bytes:
-            data = data_brut
-            chaussette.send(data.encode("utf-8"))
-        else:
-            chaussette.send(data_brut)
+    if type(data_brut) != bytes:
+        data = data_brut
+        chaussette.send(data.encode())
     else:
-        print("PROBLEME SYNCHRO ENVOI/RECEPTION")
+        chaussette.send(data_brut)
+
+def demande(chaussette):
+    chaussette.recv(1024)
 
 def mon_tour(s):
     print("C'est ton tour !")
-    token_info = int(reception_info(s))
-    if token_info>0:
+    possibilité_choix = reception_info(s)
+    if possibilité_choix == "possible":
+        demande(s)
         choix = input("Que veux-tu faire ? (indice/poser)")
         envoi_info(choix,s)
         if choix == "indice":
+            demande(s)
             joueur = input("Sur la main de quel joueur veux-tu donner une info ?")
-            info = input("Ecrire l'info à partager (une couleur/un nombre): ")
-            print("---------------------------------")
             envoi_info(joueur,s)
+            demande(s)
+            info = input("Ecrire l'info à partager (une couleur/un nombre): ")          
             envoi_info(info,s)
+            print("---------------------------------")
         else:
+            demande(s)
             carte_choisie = input("Quelle est la carte que vous souhaitez poser (Choisir un entier entre 1 et 5):")
             envoi_info(carte_choisie,s)
     else:
-        envoi_info("poser",s)
+        demande(s)
         carte_choisie = input("Vous n'avez plus de jetons d'information, veuillez choisir une carte à poser (entier entre 1 et 5)")
         envoi_info(carte_choisie,s)
     print("FIN DU TOUR")
@@ -48,20 +53,7 @@ def pas_mon_tour(s):
     print(affichage_info)
 
 
-def client_program():
-    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client_socket.connect(('localhost', 8000)) 
-    print("Connecté au serveur !")
-    print("---------------------")
-    print("En attente des autres joueurs...")
-
-    num_joueur = reception_info(client_socket)
-    print("TOUT LE MONDE EST CONNECTE")
-    print("VOUS ETES LE JOUEUR",num_joueur)
-    print("-------------------")
-
-    """DEBUT DE TOUR CLIENT"""
-
+def reception_mains_suites(client_socket):
     print("Voici votre jeu: ")
     affichemain(pickle.loads(client_socket.recv(4096)))
 
@@ -95,15 +87,33 @@ def client_program():
     print("fin envoi mains")
 
     #RECEPTION ETAT DES SUITES
-
+    
     suites = pickle.loads(client_socket.recv(4096))
     print("Etat actuel des suites:")
     affichemain(suites)
+
+
+def client_program():
+    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    port = int(input("port: "))
+    client_socket.connect(('localhost', port)) 
+    print("Connecté au serveur !")
+    print("---------------------")
+    print("En attente des autres joueurs...")
+
+    num_joueur = reception_info(client_socket)
+    print("TOUT LE MONDE EST CONNECTE")
+    print("VOUS ETES LE JOUEUR",num_joueur)
+    print("-------------------")
+
+    """DEBUT DE TOUR CLIENT"""
+
 
 ####################################################################################
 
 
     while True:
+        reception_mains_suites(client_socket)
         tour = int(reception_info(client_socket))
         print(tour,num_joueur)
         if  int(tour) == int(num_joueur):
@@ -113,10 +123,7 @@ def client_program():
 
         else:
             pas_mon_tour(client_socket)
-            pass
         
-        break
-    
     # Code pour demander la connexion, attendre les joueurs, etc.
 
     # while True:

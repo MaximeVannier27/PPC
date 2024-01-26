@@ -14,18 +14,19 @@ def handler(sig,frame):
         print(f"Destruction du process client {process}")
         os.kill(os.getpid(),signal.SIGKILL)
 
+def demande(chaussette):
+    demande = "demande"
+    chaussette.send(demande.encode())
 
 def reception_info(chaussette):
-    demande = "demande"
-    chaussette.send(demande.encode('utf-8'))
     res_code = chaussette.recv(1024)
-    res = res_code.decode("utf-8")
+    res = res_code.decode()
     return res
 
 def envoi_info(data_brut,chaussette):
     if type(data_brut) != bytes:
         data = data_brut
-        chaussette.send(data.encode("utf-8"))
+        chaussette.send(data.encode())
     else:
         chaussette.send(data_brut)
  
@@ -81,34 +82,49 @@ def envoi_suites(shared_memory_dic,s):
     
 
 def mon_tour(num_joueur,shared_memory_dic, message_queue_dic, s, synchro):
-    synchro.clear()
-    envoi_info(str(shared_memory_dic["indices"].value),s)
-    choix_client = reception_info(s)
+
+   # envoi_info(str(shared_memory_dic["indices"].value),s)
+   # print("token",str(shared_memory_dic["indices"].value))
+
+    if shared_memory_dic["indices"].value > 0:
+        envoi_info("possible",s)
+        time.sleep(5)
+        demande(s)
+        choix_client = reception_info(s)
+    else:
+        envoi_info("impossible",s)
+        choix_client = "pose"
     print('Reception choix',choix_client)
     #GERER L'ABSCENCE DE TOKENS INFORMATION
     if choix_client == "indice":
-        joueur_vise = int((s.recv(1)).decode("utf-8"))
-        print(f"Joueur visée {joueur_vise}")
+        demande(s)
+        joueur_vise = int(reception_info(s))
+        print(f"Joueur visé {joueur_vise}")
+        demande(s)
         info_donnee = reception_info(s)
+        synchro.clear()
         for j,mq in message_queue_dic.items():
             if j!= str(num_joueur):
-                print(f"j de mq: {j}")
                 mq.send(str((joueur_vise,info_donnee)).encode(),type=3)
         synchro.set()
         shared_memory_dic["shared"].acquire()
+        shared_memory_dic["indices"].value -= 1
         shared_memory_dic["tour"].value = (shared_memory_dic["tour"].value % len(message_queue_dic))+1
         shared_memory_dic["shared"].release()
 
     
 
     else:
+        time.sleep(3)
+        demande(s)
         indice_carte_choisie = reception_info(s)
         
 
         # aux autres process --> retrouver le tuple de la carte
         carte_choisie = shared_memory_dic["mains"][f"joueur_{num_joueur}"][int(indice_carte_choisie)-1]
+        synchro.clear()
         for j,mq in message_queue_dic.items():
-            if j!= num_joueur:
+            if j!= str(num_joueur):
                 mq.send(str(carte_choisie).encode(), type = 2)
 
         # au serveur --> envoyer l'indice
@@ -121,27 +137,26 @@ def mon_tour(num_joueur,shared_memory_dic, message_queue_dic, s, synchro):
 def pas_mon_tour(moi,socket,dic_mq,shared_memory_dic,synchro):
     tour=int(shared_memory_dic["tour"].value)
     receipt, t = dic_mq[f"{moi}"].receive()
-    print("receipt",receipt.decode())
     if t==3:
         (joueur,indice) = decodet(receipt)
-        print(joueur)
         if joueur==moi:
             info = f"Le joueur {tour} vous informe sur vos cartes {indice}"
             global connaissance
             mescartes=shared_memory_dic["mains"][f"joueur_{moi}"]
 
             #update des connaissances du joueur en fonction de l'indice reçu
-            for i in range(connaissance):
+            for i in range(len(connaissance)):
                 if str(mescartes[i][0])==indice:
                     connaissance[i][0]=True
-                elif str(mescartes[0][i])==indice:
-                    connaissance[0][i]=True
+                elif str(mescartes[i][1])==indice:
+                    connaissance[i][1]=True
         else:
-            info = f"Le joueur{tour} a informé le joueur{joueur} sur ses cartes {indice}"
+            info = f"Le joueur{tour} a informé le joueur {joueur} sur ses cartes {indice}"
             
     if t==2: 
+        print("receipt carte posée",receipt.decode())
         (valeur,couleur) = decodet(receipt)
-        info = f"Le joueur{tour} a posé une carte" + affichecarte(valeur,couleur)
+        info = f"Le joueur {tour} a posé une carte " + affichecarte(valeur,couleur) + '\033[0m'
     envoi_info(info,socket)
 
     synchro.wait()
@@ -162,7 +177,10 @@ def joueur_process(num_joueur,shared_memory_dic, message_queue_dic, s,synchro,de
         print("envoi mains ",num_joueur)
         envoi_mains(num_joueur,shared_memory_dic,s)
         envoi_suites(shared_memory_dic,s)
+
+        print("TOUR ENVOYE",str(shared_memory_dic["tour"].value))
         envoi_info(str(shared_memory_dic["tour"].value),s)
+        time.sleep(3)
         print("tour/num joueur",shared_memory_dic["tour"].value,num_joueur)
         if  int(shared_memory_dic["tour"].value) == int(num_joueur):
             mon_tour(num_joueur,shared_memory_dic, message_queue_dic, s, synchro)
@@ -173,5 +191,4 @@ def joueur_process(num_joueur,shared_memory_dic, message_queue_dic, s,synchro,de
         else:
             pas_mon_tour(num_joueur,s,message_queue_dic,shared_memory_dic,synchro)
 
-    s.close()
 
