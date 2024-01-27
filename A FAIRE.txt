@@ -1,0 +1,10 @@
+A FAIRE:
+
+- gestion fin de partie côté client (reception string sur fermeture de socket mais bug côté client pcq pas géré)
+- clean de code (commentaire et print debuggage)
+
+- Affichage joli côté client (clean)
+
+
+
+==== RAPPORT

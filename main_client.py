@@ -40,10 +40,12 @@ def mon_tour(s):
             demande(s)
             carte_choisie = input("Quelle est la carte que vous souhaitez poser (Choisir un entier entre 1 et 5):")
             envoi_info(carte_choisie,s)
+            print(reception_info(s))
     else:
         demande(s)
         carte_choisie = input("Vous n'avez plus de jetons d'information, veuillez choisir une carte à poser (entier entre 1 et 5)")
         envoi_info(carte_choisie,s)
+        print(reception_info(s))
     print("FIN DU TOUR")
     print("---------------------------------")
 

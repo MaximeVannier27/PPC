@@ -119,9 +119,17 @@ def mon_tour(num_joueur,shared_memory_dic, message_queue_dic, s, synchro):
         demande(s)
         indice_carte_choisie = reception_info(s)
         
+        
 
         # aux autres process --> retrouver le tuple de la carte
         carte_choisie = shared_memory_dic["mains"][f"joueur_{num_joueur}"][int(indice_carte_choisie)-1]
+        
+        if carte_choisie[0] != (shared_memory_dic["suites"][str(carte_choisie[1])]+1):
+            envoi_info("Mauvaise carte ! Vous perdez un fuse token",s)
+        else:
+            envoi_info("Bien joué ! Les suites avancent !!",s)
+        
+        
         synchro.clear()
         for j,mq in message_queue_dic.items():
             if j!= str(num_joueur):
@@ -130,6 +138,7 @@ def mon_tour(num_joueur,shared_memory_dic, message_queue_dic, s, synchro):
         # au serveur --> envoyer l'indice
         shared_memory_dic["sem"].release()
         message_queue_dic[f"{num_joueur}"].send(indice_carte_choisie.encode(),type=2)
+        
         synchro.wait()
 
     

@@ -35,7 +35,7 @@ if __name__ == "__main__":
     debut = Event()
     dic_mq = {}
     pioche = []
-    erreurs = 1 #normalement c'est 3
+    erreurs = 3 #normalement c'est 3
 
     #création d'une messagequeue pour chacun des joueurs
     for i in range(1,nombre_joueurs+1):
