@@ -1,5 +1,4 @@
 from random import randint
-import sysv_ipc
 import signal
 import os
 from joueur_process import envoi_info

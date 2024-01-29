@@ -1,12 +1,9 @@
 import socket
-from threading import Lock,Thread
+from threading import Thread
 from multiprocessing import Process, Manager, Event, Semaphore, Value
 from multiprocessing import Lock as mLock
-from joueur_process import joueur_process
-import threading      
+from joueur_process import joueur_process     
 from sysv_ipc import MessageQueue,IPC_CREAT
-import signal
-import time
 from fonction_serveur import *
         
 
