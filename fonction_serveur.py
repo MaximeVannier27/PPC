@@ -33,7 +33,10 @@ def main_server(shared_memory,pioche,dic_mq,erreurs,synchro):
 
         #Récupère l'info sur la carte piochée en écoutant sur la mq du joueur qui a posé
         j = shared_memory["tour"].value
-        message, _ = dic_mq[f"{j}"].receive()
+        print("TOUR DANS MQ",j)
+        message, t = dic_mq[f"{j}"].receive()
+        if t!=1:
+            print("Erreur lors de la réception de l'indice d'une carte posée")
 
         i_carte = int(message.decode())-1
         print("Process main_serveur: Indice de la carte posée",i_carte)
