@@ -40,7 +40,10 @@ def mon_tour(socket):
 
 #Demande de choix au client: donner un INDICE ou POSER une carte
         demande_from_serveur(socket)
-        choix = input("Que veux-tu faire ? \033[3m(indice/poser)\033[0m\nreponse> ")
+        choix =""
+        while choix not in ["indice","poser"]:
+            choix = input("Que veux-tu faire ? \033[3m(indice/poser)\033[0m\nreponse> ")
+
         envoi_info(choix,socket)
 #Disjonction de cas en fonction du choix 
         if choix == "indice":
@@ -48,11 +51,15 @@ def mon_tour(socket):
             joueur = input("Sur la main de quel joueur veux-tu donner une info ?\nreponse> ")
             envoi_info(joueur,socket)
             demande_from_serveur(socket)
-            info = input("Ecrire l'info à partager \033[3m(une couleur/un nombre)\033[0m\nreponse> ")          
+            info = "0"
+            while info not in ["1","2","3","4","5","rouge","vert","bleu","jaune","violet"]:
+                info = input("Ecrire l'info à partager \033[3m(une couleur/un nombre)\033[0m\nreponse> ") 
             envoi_info(info,socket)
         else:
             demande_from_serveur(socket)
-            carte_choisie = input("Quelle est la carte que vous souhaitez poser (Choisir un entier entre 1 et 5)\nreponse> ")
+            carte_choisie = "0"
+            while int(carte_choisie) >5 or int(carte_choisie) <1:
+                carte_choisie = input("Quelle est la carte que vous souhaitez poser (Choisir un entier entre 1 et 5)\nreponse> ")
             envoi_info(carte_choisie,socket)
             demande_to_serveur(socket)
             print(reception_info(socket))
@@ -60,7 +67,9 @@ def mon_tour(socket):
 
 #Si plus de token d'informations, le choix de poser une carte est forcé
         demande_from_serveur(socket)
-        carte_choisie = input("Vous n'avez plus de jetons d'information, veuillez choisir une carte à poser (entier entre 1 et 5)\nreponse> ")
+        carte_choisie = "0"
+        while int(carte_choisie) >5 or int(carte_choisie) <1:
+            carte_choisie = input("Vous n'avez plus de jetons d'information, veuillez choisir une carte à poser (entier entre 1 et 5)\nreponse> ")
         envoi_info(carte_choisie,socket)
         demande_to_serveur(socket)
 #Affichage du résultat de la pose (réussite ou échec en fonction de l'état des suites)
