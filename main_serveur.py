@@ -44,6 +44,16 @@ if __name__ == "__main__":
     thread_pioche = Thread(target=distribution,args=(nombre_joueurs,pioche,shared_memory))
     thread_pioche.start()
 
+    #mains spéciales pour tester la gagne
+    # couleurs = ["bleu","vert"]
+    # for i in range(0,1):
+    #         main_temp = []
+    #         for j in range(1,5):
+    #                 maintemp = (j,couleurs[i])
+    #         shared_memory["mains"][f"joueur_{i+1}"]=maintemp
+    #         print(f"Main de test :",shared_memory["mains"][f"joueur_{i+1}"])
+                    
+
     c=1
     dic_joueurs = {}
 
