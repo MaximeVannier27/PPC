@@ -6,11 +6,12 @@ from joueur_process import joueur_process
 from sysv_ipc import MessageQueue,IPC_CREAT
 from fonction_serveur import *
         
-
+#Début du programme qui lance le serveur
 if __name__ == "__main__":
 
     nombre_joueurs = int(input("Combien de joueurs vont se connecter ?\n--> "))
 
+#Ouverture de la socket et établissement de la connexion TCP
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     port = int(input("port: "))
     server_socket.bind(('localhost', port))
@@ -18,10 +19,10 @@ if __name__ == "__main__":
  
     
 
-    #initialisation des variables
+#Initialisation des variables partagées 
     mains = Manager().dict()
     tour = Value('I',1,lock=False)
-    n_indices = nombre_joueurs + 3
+    n_indices = nombre_joueurs + 3 #nombre de tokens d'informations (basic: nb_joueurs + 3)
     indices = Value('I',n_indices,lock=False)
     shared = mLock()
     sem = Semaphore(0)
@@ -32,48 +33,53 @@ if __name__ == "__main__":
     debut = Event()
     dic_mq = {}
     pioche = []
-    erreurs = 3 #normalement c'est 3
+    erreurs = 3 #nombre de tokens d'erreurs (basic: 3)
 
-    #création d'une messagequeue pour chacun des joueurs
+#Création d'une messagequeue pour chacun des joueurs
     for i in range(1,nombre_joueurs+1):
         dic_mq[f"{i}"]=MessageQueue(i, IPC_CREAT)
 
-    #création d'un thread pour gérer la création de la pioche et la distribution des cartes pendant qu'ils se connectent
+#Création d'un thread pour gérer la création de la pioche et la distribution des cartes pendant que les joueurs se connectent (pour gagner du temps)
     thread_pioche = Thread(target=distribution,args=(nombre_joueurs,pioche,shared_memory))
     thread_pioche.start()
 
     c=1
     dic_joueurs = {}
 
-    #connexion des joueurs
+#Attente de connexions de TOUS mes joueurs
     while c<=nombre_joueurs:
         print("En l'attente de joueurs...")
         client, addr = server_socket.accept()
         print(f"Joueur {c} connecté ({addr})")
+        #Lancement des process joueurs associés à chaque client (socket)
         joueur = Process(target=joueur_process, args=(c,shared_memory, dic_mq,client,synchro,debut))
         joueur.start()
-        dic_joueurs[f"joueur_{c}"] = {"client":client,"addresse":addr,"process":joueur}
+        dic_joueurs[f"joueur_{c}"] = {"client":client,"addresse":addr,"process":joueur} #dic gardant en mémoire les caractéristiques des clients 
         c+=1
 
-    #on attend que la distribution soit terminée
+    #On attend que la distribution du thread soit terminée
     thread_pioche.join()
 
-    #envoi d'un bit pour signaler le début de la partie directement aux sockets clients
+    #Envoi de leur numéro de joueur aux clients pour signaler directement le début de la partie
     for i,lst in dic_joueurs.items():
         envoi_info(i[-1],lst["client"])
 
     #Event signalant aux process joueurs le début de la partie
     debut.set()
 
-    #lancement de la partie côté serveur
+    #Lancement de la partie côté serveur
+    #fin prend une valeur de fin (plus de fuse token ou tous les 5 posés)
     fin = main_server(shared_memory,pioche,dic_mq,erreurs,synchro)
+
+#Gestion de fin de partie 
     fin_partie(shared_memory,dic_mq,fin,dic_joueurs)
-    print("FININIFNFINFINFIFNI")
-    #fermeture des connexions client
+    print("Fin du jeu. Merci à tous.tes.")
+
+    #Fermeture des connexions client
     for joueur in dic_joueurs.keys():
         finsocket = dic_joueurs[joueur]["client"]
         finsocket.close()
 
-    #fermeture des mq
+    #Fermeture des mq
     for mq in dic_mq.values():
         mq.remove()

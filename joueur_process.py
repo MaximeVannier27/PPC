@@ -51,7 +51,7 @@ def envoi_mains(num_joueur,shared_memory_dic,s):
     shared_memory_dic["shared"].acquire()
     main_actuelle = shared_memory_dic["mains"][f"joueur_{num_joueur}"]
     main_client = []
-    #formatage de la main personnelle qui sera envoyé au client en fonction de la connaissance de son jeu réelle (main_actuelle)
+    #Formatage de la main personnelle qui sera envoyé au client en fonction de la connaissance de son jeu réelle (main_actuelle)
     for i in range(len(main_actuelle)):
         if not connaissance[i][0] and not connaissance[i][1]:
             main_client.append(("?","?"))
@@ -129,10 +129,10 @@ def mon_tour(num_joueur,shared_memory_dic, message_queue_dic, s, synchro):
         #envoi de la réussite ou non de la pose en fonction de l'état actuel des suites et signalisation en conséquence au client
         if carte_choisie[0] != (shared_memory_dic["suites"][str(carte_choisie[1])]+1):
             demande_from_client(s)
-            envoi_info("Mauvaise carte ! Vous perdez un fuse token",s)
+            envoi_info("\033[38;2;169;50;38mMauvaise carte ! Vous perdez un fuse token\033[0m",s)
         else:
             demande_from_client(s)
-            envoi_info("Bien joué ! Les suites avancent !!",s)
+            envoi_info("\033[38;2;252;63;195mBien joué ! Les suites avancent !!\033[0m",s)
         
         
         synchro.clear()
@@ -157,7 +157,7 @@ def pas_mon_tour(moi,socket,dic_mq,shared_memory_dic,synchro):
         #joueur: joueur visé par l'indice; indice: information donnée (couleur ou chiffre)
         (joueur,indice) = decodet(receipt)
         if joueur==moi:
-            info = f"Le joueur {tour} vous informe sur vos cartes {indice}"
+            info = f"\033[1mLe joueur {tour} vous informe sur vos cartes {indice}\033[0m"
             global connaissance
             mescartes=shared_memory_dic["mains"][f"joueur_{moi}"]
 
@@ -169,7 +169,7 @@ def pas_mon_tour(moi,socket,dic_mq,shared_memory_dic,synchro):
                     connaissance[i][1]=True
         else:
             #Si pas concerné, les autres joueurs reçoivent quand même l'information sur l'indice donné
-            info = f"Le joueur {tour} a informé le joueur {joueur} sur ses cartes: {indice}"
+            info = f"\033[1m Le joueur {tour} a informé le joueur {joueur} sur ses cartes: {indice} \033[0m"
             
     if t==2: 
         print(f"Process joueur_{moi}: receipt carte posée",receipt.decode())
