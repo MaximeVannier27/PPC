@@ -8,8 +8,9 @@ from fonction_serveur import *
         
 
 if __name__ == "__main__":
-
-    nombre_joueurs = int(input("Combien de joueurs vont se connecter ?\n--> "))
+    nombre_joueurs = 0
+    while nombre_joueurs < 2 or nombre_joueurs > 5:
+        nombre_joueurs = int(input("Combien de joueurs (2 à 5) vont se connecter ?\n--> "))
 
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     port = int(input("port: "))

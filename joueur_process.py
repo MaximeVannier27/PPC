@@ -143,7 +143,7 @@ def mon_tour(num_joueur,shared_memory_dic, message_queue_dic, s, synchro):
 
         # envoi au serveur principal (process parent) de l'indice de la carte choisir pour que celui-ci gère la pioche et l'actualisation des shared memory (suites, états des mains,...)
         shared_memory_dic["sem"].release()
-        message_queue_dic[f"{num_joueur}"].send(indice_carte_choisie.encode(),type=2)
+        message_queue_dic[f"{num_joueur}"].send(indice_carte_choisie.encode(),type=1)
         
         synchro.wait() 
 
