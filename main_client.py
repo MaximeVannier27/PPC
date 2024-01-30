@@ -1,82 +1,105 @@
 import socket
-import pickle
-import threading
-import time
-from test import affichecarte,affichemain
+import pickle #module permettant un échange simple de liste à travers les sockets tcp (désérialisation automatique  des listes)
+import sys
+from affichage import affichemain
 
+#FONCTIONS D'ENVOI ET DE RECEPTION DES DONNEES ENTRE CLIENT/SERVEUR
+def reception_info(socket):
+    res_code = socket.recv(1024)
+    res = res_code.decode()
 
-def reception_info(chaussette):
-    data = chaussette.recv(1024)
-    decoded_data = data.decode("utf-8")
-    return decoded_data
+    return res
 
-def envoi_info(data_brut,chaussette):
+def envoi_info(data_brut,socket):
     if type(data_brut) != bytes:
-        data = data_brut.encode('utf-8')
-        chaussette.send(data)
+        data = data_brut
+        socket.send(data.encode())
     else:
-        chaussette.send(data_brut)
+        socket.send(data_brut)
 
-def mon_tour(s):
+
+#FONCTIONS PERMETTANT DE SYNCHRONISER LES ECHANGES TCP CLIENT/SERVEUR -> éviter le surchargement des buffers  
+def demande_from_serveur(socket):
+    socket.recv(1024)
+
+def demande_to_serveur(socket):
+    demande_to_client = "demande"
+    socket.send(demande_to_client.encode())
+
+
+
+def mon_tour(socket):
+#Vérification si la demande de choix est possible (envoyé par le process serveur en fonction de la présence ou non de token d'informations)
     print("C'est ton tour !")
-    token_info = int(reception_info(s))
-    if token_info>0:
+    demande_to_serveur(socket)
+    possibilité_choix = reception_info(socket)
+
+#Disjonction de cas en fonction de la possibilité du choix
+    if possibilité_choix == "possible":
+
+#Demande de choix au client: donner un INDICE ou POSER une carte
+        demande_from_serveur(socket)
         choix = input("Que veux-tu faire ? (indice/poser)")
-        envoi_info(choix,s)
+        envoi_info(choix,socket)
+#Disjonction de cas en fonction du choix 
         if choix == "indice":
+            demande_from_serveur(socket)
             joueur = input("Sur la main de quel joueur veux-tu donner une info ?")
-            info = input("Ecrire l'info à partager (une couleur/un nombre): ")
+            envoi_info(joueur,socket)
+            demande_from_serveur(socket)
+            info = input("Ecrire l'info à partager (une couleur/un nombre): ")          
+            envoi_info(info,socket)
             print("---------------------------------")
-            envoi_info(joueur,s)
-            envoi_info(info,s)
         else:
+            demande_from_serveur(socket)
             carte_choisie = input("Quelle est la carte que vous souhaitez poser (Choisir un entier entre 1 et 5):")
-            envoi_info(carte_choisie,s)
+            envoi_info(carte_choisie,socket)
+            demande_to_serveur(socket)
+            print(reception_info(socket))
     else:
-        envoi_info("poser",s)
+
+#Si plus de token d'informations, le choix de poser une carte est forcé
+        demande_from_serveur(socket)
         carte_choisie = input("Vous n'avez plus de jetons d'information, veuillez choisir une carte à poser (entier entre 1 et 5)")
-        envoi_info(carte_choisie,s)
+        envoi_info(carte_choisie,socket)
+        demande_to_serveur(socket)
+#Affichage du résultat de la pose (réussite ou échec en fonction de l'état des suites)
+        print(reception_info(socket))
     print("FIN DU TOUR")
     print("---------------------------------")
 
-def pas_mon_tour(s):
+def pas_mon_tour(socket):
+    demande_to_serveur(socket)
     print("Ce n'est pas ton tour, en attente d'actions d'autres joueurs...")
-    affichage_info = reception_info(s)
+    affichage_info = reception_info(socket)
     print(affichage_info)
 
-
-def client_program():
-    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client_socket.connect(('localhost', 8000)) 
-    print("Connecté au serveur !")
-    print("---------------------")
-    print("En attente des autres joueurs...")
-
-    num_joueur = reception_info(client_socket)
-    print("TOUT LE MONDE EST CONNECTE")
-    print("VOUS ETES LE JOUEUR",num_joueur)
+def reception_mains_suites(client_socket):
+#Reception de la main du joueur (formatée en fonction des informations données pendant la partie) + test si fin de partie 
+    main_perso = client_socket.recv(4096)
+    try:
+        main_perso_decode = pickle.loads(main_perso)
+        print("Voici votre jeu: ")
+        affichemain(main_perso_decode)
+    except pickle.UnpicklingError:
+        print("La partie est finie")
+        sys.exit()
     print("-------------------")
 
-    """DEBUT DE TOUR CLIENT"""
-
-    print("Voici votre jeu: ")
-    affichemain(pickle.loads(client_socket.recv(4096)))
-
-    print("-------------------")
-    nb_joueurs_exclu = int.from_bytes(client_socket.recv(1), byteorder='big')
+    nb_joueurs = int.from_bytes(client_socket.recv(1), byteorder='big')
     
-    #Reception des mains des autres joueurs
+#Reception des mains des autres joueurs en fonction
     c = 1
-    while c < nb_joueurs_exclu:
-        # Recevoir la taille du message
+    while c < nb_joueurs:
+#Reception de la taille du message pour plus de stabilité à la reception
         taille_info = int.from_bytes(client_socket.recv(4), byteorder='big')
     
-        # Recevoir les données
+#Reception des données
         info_joueurs_codee = b""
         while len(info_joueurs_codee) < taille_info:
             chunk = client_socket.recv(min(4096, taille_info - len(info_joueurs_codee)))
             if not chunk:
-                # Gérer une éventuelle fermeture de la connexion
+                # Gérer une éventuelle fermeture de la connexion en cas de problème
                 break
             info_joueurs_codee += chunk
     
@@ -88,48 +111,41 @@ def client_program():
             print(f"Main du joueur {info_joueurs[0]}:")
             affichemain(info_joueurs[1])
         c += 1
-    
-    print("fin envoi mains")
 
-    #RECEPTION ETAT DES SUITES
-
+#Reception de l'état courant des suites
     suites = pickle.loads(client_socket.recv(4096))
     print("Etat actuel des suites:")
     affichemain(suites)
 
+def client_program():
+#Initialisation de la connexion avec le serveur
+    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    port = int(input("port: "))
+    client_socket.connect(('localhost', port)) 
+    print("Connecté au serveur !")
+    print("---------------------")
+    print("En attente des autres joueurs...")
 
+#Signal annonçant le début du jeu + reception du numéro de joueur courant
+    num_joueur = int(reception_info(client_socket))
+    print("TOUT LE MONDE EST CONNECTE")
+    print("VOUS ETES LE JOUEUR",num_joueur)
+    print("-------------------")
 
+#Boucle de jeu principal côté client
     while True:
-        tour = reception_info(client_socket)
+        demande_to_serveur(client_socket)
+        reception_mains_suites(client_socket)
 
-        if  tour == num_joueur:
+#Lancement de la fonction adaptée en fonction de quel joueur dois jouer
+        demande_to_serveur(client_socket)
+        tour = int(reception_info(client_socket))
+        if tour == num_joueur:
             mon_tour(client_socket)
-
-        
-
         else:
             pas_mon_tour(client_socket)
-            pass
-        
-        break
-    
-    # Code pour demander la connexion, attendre les joueurs, etc.
 
-    # while True:
-    #     message = client_socket.recv(1024).decode()
-    #     if not message:
-    #         break
-
-    #     # Traitement des messages selon le flag correspondant
-    #     if message.startswith("GAME_STATE"):
-    #         # Affichage de l'état du jeu
-    #         print(message[11:])
-    #     elif message.startswith("YOUR_TURN"):
-    #         # C'est le tour du joueur
-    #         user_action = input("Choisissez une action (indice/poser): ")
-    #         client_socket.send(user_action.encode())
-    client_socket.close()
-
+#Garde-fou client
 if __name__ == "__main__":
     client_program()
 
