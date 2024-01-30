@@ -1,5 +1,5 @@
 
-#mains = (("?","vert"),("?","bleu"),(1,"?"),(2,"violet"),(5,"rouge"))
+#mains_test = (("?","vert"),("?","bleu"),(1,"?"),(2,"violet"),(5,"rouge"))
 
 
 #Affichage des cartes avec la couleur qui leur sont associées
