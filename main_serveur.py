@@ -49,7 +49,7 @@ if __name__ == "__main__":
     # for i in range(0,1):
     #         main_temp = []
     #         for j in range(1,5):
-    #                 maintemp = (j,couleurs[i])
+    #                 maintemp += (j,couleurs[i])
     #         shared_memory["mains"][f"joueur_{i+1}"]=maintemp
     #         print(f"Main de test :",shared_memory["mains"][f"joueur_{i+1}"])
                     
